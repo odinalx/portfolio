@@ -253,7 +253,7 @@ export default function Home() {
       </section>
       <div className="m-auto max-w-3xl">
         {' '}
-        <section id="about" ref={aboutSectionRef} className=" flex flex-col">
+        <section id="about" ref={aboutSectionRef} className="flex flex-col scroll-mt-24 md:scroll-mt-28">
           <div className="flex items-center mb-8 md:mb-12">
             <h3 className="section-title text-title text-3xl md:text-5xl lg:text-6xl font-bold whitespace-nowrap">
               <span className="text-highlight">&gt;</span>About
@@ -283,7 +283,7 @@ export default function Home() {
             </p>
           </div>
         </section>
-        <section id="experience" className=" flex flex-col ">
+        <section id="experience" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
           <div className="flex items-center mb-8 md:mb-12">
             <h3 className="section-title text-title text-3xl md:text-5xl lg:text-6xl font-bold whitespace-nowrap">
               <span className="text-highlight">&gt;</span>Experience
@@ -293,7 +293,9 @@ export default function Home() {
           <div className="section-content space-y-3 mb-24 md:mb-32 lg:mb-48">
             <Experience />
             <a
-              href="#"
+              href="/Odin_ALEXANDRE_CV.pdf"
+              target="_blank"
+              rel="noreferrer"
               className="experience-cta flex text-title font-bold hover:text-highlight box-content group w-fit text-sm md:text-base"
               aria-label="View full résumé (PDF)"
             >
@@ -302,7 +304,7 @@ export default function Home() {
             </a>
           </div>
         </section>
-        <section id="work" className=" flex flex-col ">
+        <section id="work" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
           <div className="flex items-center mb-8 md:mb-12">
             <h3 className="section-title text-title text-3xl md:text-5xl lg:text-6xl font-bold whitespace-nowrap">
               <span className="text-highlight">&gt;</span>Work
@@ -321,7 +323,7 @@ export default function Home() {
             </a>
           </div>
         </section>
-        <section id="contact" className=" flex flex-col ">
+        <section id="contact" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
           <div className="flex items-center mb-8 md:mb-12">
             <h3 className="section-title text-title text-3xl md:text-5xl lg:text-6xl font-bold whitespace-nowrap">
               <span className="text-highlight">&gt;</span>Contact
