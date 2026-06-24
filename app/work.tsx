@@ -2,69 +2,12 @@
 
 import Image from 'next/image';
 import { Github, ArrowUpRight } from 'lucide-react';
-
-type Project = {
-  slug: string;
-  title: string;
-  description: string;
-  imageSrc: string;
-  imageAlt: string;
-  href?: string;
-  githubUrl?: string;
-  techs: { name: string; iconSrc: string }[];
-};
-
-const projects: Project[] = [
-  {
-    slug: 'project-1',
-    title: 'Portfolio V1',
-    description:
-      'First iteration of my portfolio, created as part of an academic project.',
-    imageSrc: '/test.png',
-    imageAlt: 'Preview Portfolio V1',
-    href: '',
-    githubUrl: 'https://github.com/odinalx/PortfolioV1',
-    techs: [
-      { name: 'Next.js', iconSrc: '/nextdotjs.svg' },
-      { name: 'Tailwind', iconSrc: '/tailwindcss.svg' },
-    ],
-  },
-  {
-    slug: 'project-2',
-    title: 'SLV App',
-    description:
-      'Final-year project: development of a management website for an association overseeing around fifteen sports and leisure sections.',
-    imageSrc: '/test.png',
-    imageAlt: 'Preview SLV App',
-    href: '',
-    githubUrl: 'https://github.com/odinalx/Projet-tutore',
-    techs: [
-      { name: 'Vue.JS', iconSrc: '/vuedotjs.svg' },
-      { name: 'Tailwind', iconSrc: '/tailwindcss.svg' },
-      { name: 'PHP', iconSrc: '/php.svg' },
-    ],
-  },
-  {
-    slug: 'project-3',
-    title: 'SecretSanta',
-    description:
-      'A modern web application for organizing Secret Santa gift exchanges with friends, family, or colleagues.',
-    imageSrc: '/Secret-Santa.png',
-    imageAlt: 'Preview Secret-Santa',
-    href: 'https://secretsanta.lorisalex.com/',
-    githubUrl: 'https://github.com/odinalx/SecretSanta',
-    techs: [
-      { name: 'Docker', iconSrc: '/docker.svg' },
-      { name: 'Next.js', iconSrc: '/nextdotjs.svg' },
-      { name: 'Tailwind', iconSrc: '/tailwindcss.svg' },
-    ],
-  },
-];
+import { featuredProjects } from './data/projects';
 
 export default function Work() {
   return (
     <div className="space-y-8 mb-16 group/list">
-      {projects.map((project) => (
+      {featuredProjects.map((project) => (
         <div
           key={project.slug}
           className={`group relative flex flex-col md:flex-row pb-1 transition-all lg:group-hover/list:opacity-50 lg:hover:!opacity-100 ${
