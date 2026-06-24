@@ -53,6 +53,7 @@ export const projects: Project[] = [
     imageSrc: '/portfolio.png',
     imageAlt: 'Preview Portfolio V2',
     href: 'https://odinalx.fr',
+    githubUrl:'https://github.com/odinalx/portfolio',
     featured: true,
     techs: [
       { name: 'Next.js', iconSrc: '/nextdotjs.svg' },
