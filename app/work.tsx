@@ -55,12 +55,12 @@ export default function Work() {
                   <a
                     href={project.href}
                     target="_blank"
-                    className="flex items-start text-title transition-colors duration-200 group w-fit pointer-events-none"
+                    className="inline-flex items-center gap-1 text-title transition-colors duration-200 group w-fit pointer-events-none"
                   >
                     <h4 className="group-hover:text-highlight">
                       {project.title}
                     </h4>
-                    <ArrowUpRight className="ml-1 w-5 h-5 md:w-6 md:h-6 transition-transform duration-200 ease-out translate-y-[4px] -translate-x-[4px] group-hover:-translate-y-0 group-hover:translate-x-0 group-hover:text-highlight" aria-hidden="true" />
+                    <ArrowUpRight className="h-[0.9em] w-[0.9em] shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-[2px] group-hover:-translate-y-[2px] group-hover:text-highlight" aria-hidden="true" />
                   </a>
                 ) : (
                   <h4 className="group-hover:text-highlight">

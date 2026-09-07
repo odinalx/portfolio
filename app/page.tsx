@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import Experience from './experience';
 import Work from './work';
-import { ArrowUpRight, ArrowRight, ArrowDown } from 'lucide-react';
+import ArrowLink from './arrow-link';
+import { ArrowDown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -239,21 +239,11 @@ export default function Home() {
           currently looking for new opportunities.
         </p>
 
-        <div className="hero-cta mt-8 md:mt-10 flex flex-wrap gap-3 md:gap-4">
-          <Link
-            href="/#work"
-            className="inline-flex items-center gap-1 rounded-full bg-highlight-deep px-5 py-2.5 text-sm md:text-base font-bold text-white transition-colors hover:bg-highlight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight"
-          >
+        <div className="hero-cta mt-8 md:mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm md:text-base">
+          <ArrowLink href="/#work" direction="down">
             View my work
-            <ArrowDown className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
-          </Link>
-          <a
-            href="mailto:odinalexandre.dev@gmail.com"
-            className="inline-flex items-center gap-1 rounded-full border border-faded px-5 py-2.5 text-sm md:text-base font-bold text-title transition-colors hover:border-title hover:text-highlight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight"
-          >
-            Get in touch
-            <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
-          </a>
+          </ArrowLink>
+          <ArrowLink href="mailto:odinalexandre.dev@gmail.com">Get in touch</ArrowLink>
         </div>
       </section>
       <div className="m-auto max-w-3xl">
@@ -297,16 +287,26 @@ export default function Home() {
           </div>
           <div className="section-content space-y-3 mb-24 md:mb-32 lg:mb-48">
             <Experience />
-            <a
-              href="/Odin_ALEXANDRE_CV.pdf"
-              target="_blank"
-              rel="noreferrer"
-              className="experience-cta flex text-title font-bold hover:text-highlight box-content group w-fit text-sm md:text-base"
-              aria-label="View full résumé (PDF)"
-            >
-              View Full Résumé
-              <ArrowUpRight className="ml-1 transition-transform duration-200 ease-out translate-y-[4px] -translate-x-[4px] group-hover:-translate-y-0 group-hover:translate-x-0" aria-hidden="true" />
-            </a>
+            <div className="experience-cta flex flex-wrap items-center gap-x-3 gap-y-1 text-sm md:text-base">
+              <ArrowLink
+                href="/Odin_ALEXANDRE_CV.pdf"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="View Full Résumé (PDF, English)"
+              >
+                View Full Résumé
+              </ArrowLink>
+              <a
+                href="/Odin_ALEXANDRE_CV_FR.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs md:text-sm font-bold text-primary transition-colors hover:text-highlight"
+                aria-label="Voir le CV complet (PDF, français)"
+                lang="fr"
+              >
+                Version française
+              </a>
+            </div>
           </div>
         </section>
         <section id="work" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
@@ -318,13 +318,9 @@ export default function Home() {
           </div>
           <div className="section-content space-y-3 mb-24 md:mb-32 lg:mb-48">
             <Work />
-            <Link
-              href="/work"
-              className="work-cta flex text-title font-bold hover:text-highlight box-content group w-fit text-sm md:text-base"
-            >
+            <ArrowLink href="/work" direction="right" className="work-cta text-sm md:text-base">
               View All Works
-              <ArrowRight className="ml-1 transition-transform duration-200 ease-out translate-y-[2px] -translate-x-[4px] group-hover:translate-x-[2px]" aria-hidden="true" />
-            </Link>
+            </ArrowLink>
           </div>
         </section>
         <section id="contact" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
