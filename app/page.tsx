@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import Experience from './experience';
 import Work from './work';
 import { ArrowUpRight, ArrowRight, ArrowDown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { MOTION_OK, useEntrance } from './intro-context';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,7 +21,15 @@ function TypewriterText({
 }) {
   const [displayText, setDisplayText] = useState(text);
   const isAnimatingRef = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const originalText = text;
+
+  // Clear a running typewriter if the component unmounts mid-animation
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   const handleMouseEnter = () => {
     if (isAnimatingRef.current) return;
@@ -27,12 +37,13 @@ function TypewriterText({
     isAnimatingRef.current = true;
     let currentIndex = 1; // Start from 1 to keep first letter visible
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (currentIndex <= originalText.length) {
         setDisplayText(originalText.slice(0, currentIndex));
         currentIndex++;
       } else {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
         isAnimatingRef.current = false;
       }
     }, 80);
@@ -115,47 +126,24 @@ export default function Home() {
   const aboutSectionRef = useRef<HTMLElement>(null);
   const flipWordRef = useRef<{ triggerAnimation: () => void }>(null);
 
-  useEffect(() => {
-    // Hero animations - start after sidebars begin
-    // Loader: 2.2s
-    // Navbar: 2.4s + 0.8s = finishes at 3.2s
-    // Side bars: 3.25s + 1s = finishes at 4.25s
-    // Start hero at 3.5s (after sidebars start)
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-      tl.from('.hero-title', {
-        y: 100,
-        opacity: 0,
-        duration: 1,
-        delay: 3.8,
-      })
-        .from(
-          '.hero-subtitle',
-          {
-            y: 80,
-            opacity: 0,
-            duration: 0.8,
-          },
-          '-=0.6'
-        )
-        .from(
-          '.hero-description',
-          {
-            y: 60,
-            opacity: 0,
-            duration: 0.8,
-          },
-          '-=0.4'
-        );
-    }, heroRef);
-
-    return () => ctx.revert();
-  }, []);
+  // Hero entrance: starts right as the intro loader fades out (or immediately
+  // when the loader is skipped). Skipped entirely under reduced motion.
+  useEntrance(heroRef, () => {
+    gsap
+      .timeline({ defaults: { ease: 'power3.out' }, delay: 0.3 })
+      .from('.hero-title', { y: 100, opacity: 0, duration: 1 })
+      .from('.hero-subtitle', { y: 80, opacity: 0, duration: 0.8 }, '-=0.6')
+      // Text-bearing blocks slide out of a clip instead of fading, so their
+      // colour contrast is never measured mid-transition
+      .from('.hero-description', { y: 40, clipPath: 'inset(0 0 100% 0)', duration: 0.8 }, '-=0.4')
+      .from('.hero-cta', { y: 30, clipPath: 'inset(0 0 100% 0)', duration: 0.6 }, '-=0.5');
+  });
 
   useEffect(() => {
     // Section title animations - only for About section
     const triggers: ScrollTrigger[] = [];
+    // Respect reduced motion: leave the section in its natural state
+    if (!window.matchMedia(MOTION_OK).matches) return;
 
     if (aboutSectionRef.current) {
       const title = aboutSectionRef.current.querySelector('.section-title');
@@ -248,8 +236,25 @@ export default function Home() {
           accessible and engaging{' '}
           <span className="text-highlight font-bold">digital experiences</span>{' '}
           for the <span className="text-highlight font-bold">Web</span>. I am
-          currently looking for new oppurtunities.
+          currently looking for new opportunities.
         </p>
+
+        <div className="hero-cta mt-8 md:mt-10 flex flex-wrap gap-3 md:gap-4">
+          <Link
+            href="/#work"
+            className="inline-flex items-center gap-1 rounded-full bg-highlight-deep px-5 py-2.5 text-sm md:text-base font-bold text-white transition-colors hover:bg-highlight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight"
+          >
+            View my work
+            <ArrowDown className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
+          </Link>
+          <a
+            href="mailto:odinalexandre.dev@gmail.com"
+            className="inline-flex items-center gap-1 rounded-full border border-faded px-5 py-2.5 text-sm md:text-base font-bold text-title transition-colors hover:border-title hover:text-highlight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight"
+          >
+            Get in touch
+            <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
+          </a>
+        </div>
       </section>
       <div className="m-auto max-w-3xl">
         {' '}
@@ -313,14 +318,13 @@ export default function Home() {
           </div>
           <div className="section-content space-y-3 mb-24 md:mb-32 lg:mb-48">
             <Work />
-            <a
+            <Link
               href="/work"
               className="work-cta flex text-title font-bold hover:text-highlight box-content group w-fit text-sm md:text-base"
-              aria-label="View all projects"
             >
               View All Works
               <ArrowRight className="ml-1 transition-transform duration-200 ease-out translate-y-[2px] -translate-x-[4px] group-hover:translate-x-[2px]" aria-hidden="true" />
-            </a>
+            </Link>
           </div>
         </section>
         <section id="contact" className="flex flex-col scroll-mt-24 md:scroll-mt-28">
@@ -332,14 +336,14 @@ export default function Home() {
           </div>
           <div className="section-content space-y-3 mb-20 md:mb-32 text-center flex flex-col items-center">
             <p className="max-w-xl m-auto mb-6 md:mb-8 text-sm md:text-base px-4">
-              Im currently looking for new opportunities. My inbox is always
-              open, whether you have a question or just want to say hi !
+              I&apos;m currently looking for new opportunities. My inbox is always
+              open, whether you have a question or just want to say hi!
             </p>
             <ArrowDown className="mb-6 md:mb-8 text-title w-5 h-5 md:w-6 md:h-6" aria-hidden="true" />
             <a
               href="mailto:odinalexandre.dev@gmail.com"
               className="font-bold text-2xl md:text-4xl lg:text-5xl text-title px-4"
-              aria-label="Send email to odinalexandre.dev@gmail.com"
+              aria-label="Get in touch by email"
               onMouseEnter={() => {
                 flipWordRef.current?.triggerAnimation();
               }}

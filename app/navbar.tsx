@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { Menu, X } from 'lucide-react';
+import { useEntrance } from './intro-context';
 
 const navItems = [
   { name: 'About', path: '/#about' },
@@ -14,81 +15,60 @@ const navItems = [
   { name: 'Contact', path: '/#contact' },
 ];
 
+const sectionIds = ['home', 'about', 'experience', 'work', 'contact'];
+
 export default function Navbar() {
   const pathname = usePathname();
   const [activeSection, setActiveSection] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const isHome = pathname === '/';
 
-  /*  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+  // Entrance: starts when the intro loader is done (or immediately if skipped)
+  useEntrance(
+    undefined,
+    () => {
+      if (!barRef.current) return;
+      gsap.from(barRef.current, { y: -100, opacity: 0, duration: 0.8, ease: 'power3.out' });
+    },
+    [pathname],
+  );
 
-      if (currentScrollY < lastScrollY || currentScrollY < 10) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      } 
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);*/
-
+  // Scrollspy: one IntersectionObserver instead of layout reads on every scroll
   useEffect(() => {
-    // Entrance animation for navbar - starts after loader (2.2s)
-    if (navRef.current) {
-      const nav = navRef.current.querySelector('nav');
-      if (nav) {
-        gsap.from(nav, {
-          y: -100,
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          delay: 2.4,
-        });
-      }
-    }
-  }, []);
+    if (!isHome) return;
 
-  useEffect(() => {
-    const sectionIds = ['home', 'about', 'experience', 'work', 'contact'];
-
-    const handleScroll = () => {
-      const viewportCenter = window.scrollY + window.innerHeight / 2;
-      let closestSectionId = '';
-      let smallestDistance = Number.POSITIVE_INFINITY;
-
+    const ratios = new Map<string, number>();
+    const pick = () => {
+      let best = '';
+      let bestRatio = 0;
       for (const id of sectionIds) {
-        const element = document.getElementById(id);
-        if (!element) continue;
-
-        const rect = element.getBoundingClientRect();
-        const elementCenter = window.scrollY + rect.top + rect.height / 2;
-        const distanceToCenter = Math.abs(elementCenter - viewportCenter);
-
-        if (distanceToCenter < smallestDistance) {
-          smallestDistance = distanceToCenter;
-          closestSectionId = id;
+        const r = ratios.get(id) ?? 0;
+        if (r > bestRatio) {
+          bestRatio = r;
+          best = id;
         }
       }
-
-      if (closestSectionId) {
-        setActiveSection(closestSectionId);
-      }
+      if (best) setActiveSection(best);
     };
 
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          ratios.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+        }
+        pick();
+      },
+      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
+    );
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, []);
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [isHome]);
 
   // Don't show navbar on /work page
   if (pathname === '/work') {
@@ -96,10 +76,8 @@ export default function Navbar() {
   }
 
   return (
-    <header ref={navRef}>
-      <div
-        className={`fixed top-0 left-0 right-0 z-40 pt-4 pb-2 md:py-6 lg:py-4`}
-      >
+    <header>
+      <div ref={barRef} className="fixed top-0 left-0 right-0 z-40 pt-4 pb-2 md:py-6 lg:py-4">
         <div className="max-w-5xl mx-auto px-4">
           {/* Desktop Navigation */}
           <nav className="hidden md:flex justify-center" aria-label="Main navigation">
@@ -110,13 +88,8 @@ export default function Navbar() {
                 </Link>
               </li>
               {navItems.map((item) => {
-                const targetId = item.path.includes('#')
-                  ? item.path.split('#')[1]
-                  : '';
-                const isActive =
-                  item.path === '/'
-                    ? pathname === item.path
-                    : activeSection === targetId;
+                const targetId = item.path.split('#')[1] ?? '';
+                const isActive = activeSection === targetId;
                 return (
                   <li key={item.name}>
                     <Link
@@ -124,6 +97,7 @@ export default function Navbar() {
                       className={`text-base lg:text-lg font-bold transition-colors hover:text-title ${
                         isActive ? 'text-highlight' : 'text-primary'
                       }`}
+                      aria-current={isActive ? 'location' : undefined}
                     >
                       {item.name}
                     </Link>
@@ -142,6 +116,8 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-title p-2 transition-transform duration-300 ease-in-out"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               <div
                 className={`transition-transform duration-300 ease-in-out ${
@@ -155,22 +131,19 @@ export default function Navbar() {
 
           {/* Mobile Menu Dropdown */}
           <nav
+            id="mobile-menu"
             className={`md:hidden absolute top-full left-4 right-4 mt-1 bg-background/95 backdrop-blur-sm border border-primary rounded-2xl overflow-hidden shadow-lg transition-all duration-300 ease-in-out origin-top ${
               mobileMenuOpen
                 ? 'opacity-100 scale-y-100 translate-y-0'
                 : 'opacity-0 scale-y-0 -translate-y-2 pointer-events-none'
             }`}
             aria-label="Mobile navigation menu"
+            aria-hidden={!mobileMenuOpen}
           >
             <ul className="flex flex-col py-1">
               {navItems.map((item, index) => {
-                const targetId = item.path.includes('#')
-                  ? item.path.split('#')[1]
-                  : '';
-                const isActive =
-                  item.path === '/'
-                    ? pathname === item.path
-                    : activeSection === targetId;
+                const targetId = item.path.split('#')[1] ?? '';
+                const isActive = activeSection === targetId;
                 return (
                   <li
                     key={item.name}
@@ -188,6 +161,7 @@ export default function Navbar() {
                     <Link
                       href={item.path}
                       onClick={() => setMobileMenuOpen(false)}
+                      tabIndex={mobileMenuOpen ? 0 : -1}
                       className={`block px-6 py-3 text-base font-bold transition-colors hover:bg-white/5 ${
                         isActive ? 'text-highlight' : 'text-primary'
                       }`}

@@ -3,78 +3,61 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
-export default function Loader({ onLoadComplete }: { onLoadComplete: () => void }) {
+export default function Loader({ onDone }: { onDone: () => void }) {
   const loaderRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [isComplete, setIsComplete] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    const pathElements = svgRef.current?.querySelectorAll('path.logo-path');
-    const polygonElement = svgRef.current?.querySelector('polygon.logo-path');
-    if (!pathElements) return;
-    
-    // Set initial state for paths - prepare for drawing animation
-    gsap.set(pathElements, {
-      strokeDasharray: function(index, target) {
-        const length = (target as SVGPathElement).getTotalLength();
-        return `${length} ${length}`;
-      },
-      strokeDashoffset: function(index, target) {
-        return (target as SVGPathElement).getTotalLength();
-      },
-      visibility: 'visible', // Make visible now that strokeDashoffset hides the stroke
-    });
+    // Reduced motion: the overlay is already display:none via CSS, release the
+    // content right away. Must run before any getTotalLength() call (returns 0
+    // on display:none elements in Firefox).
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onDone();
+      setHidden(true);
+      return;
+    }
 
-    // Keep polygon hidden initially
-    if (polygonElement) {
-      gsap.set(polygonElement, {
-        opacity: 0,
+    const ctx = gsap.context(() => {
+      const svg = svgRef.current;
+      if (!svg) return;
+      const paths = svg.querySelectorAll<SVGPathElement>('path.logo-path');
+      const polygon = svg.querySelector('polygon.logo-path');
+
+      gsap.set(paths, {
+        strokeDasharray: (_i: number, t: SVGPathElement) => {
+          const l = t.getTotalLength() || 1;
+          return `${l} ${l}`;
+        },
+        strokeDashoffset: (_i: number, t: SVGPathElement) => t.getTotalLength() || 1,
         visibility: 'visible',
       });
-    }
+      if (polygon) gsap.set(polygon, { opacity: 0, visibility: 'visible' });
 
-    // Timeline for logo animation
-    const tl = gsap.timeline({
-      onComplete: () => {
-        // Fade out loader after animation completes
-        gsap.to(loaderRef.current, {
-          opacity: 0,
-          duration: 0.4,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            setIsComplete(true);
-            onLoadComplete();
-          },
-        });
-      },
-    });
-
-    // Animate the paths drawing - start immediately with longer duration
-    tl.to(pathElements, {
-      strokeDashoffset: 0,
-      duration: 1.8,
-      ease: 'power2.inOut',
-      stagger: 0.15,
-      delay: 0,
-    });
-
-    // Fade in the polygon at the end
-    if (polygonElement) {
-      tl.to(polygonElement, {
-        opacity: 1,
+      const tl = gsap.timeline();
+      // 1.2s + 0.3s stagger: the draw ends at 1.5s
+      tl.to(paths, { strokeDashoffset: 0, duration: 1.2, stagger: 0.3, ease: 'power2.inOut' });
+      if (polygon) tl.to(polygon, { opacity: 1, duration: 0.3, ease: 'power2.out' }, '-=0.3');
+      // t = 1.5s: entrances start underneath the fading overlay
+      tl.call(onDone);
+      tl.to(loaderRef.current, {
+        autoAlpha: 0,
         duration: 0.3,
-        ease: 'power2.out',
-      }, '-=0.3');
-    }
+        ease: 'power2.inOut',
+        onComplete: () => setHidden(true),
+      });
+    }, loaderRef);
 
-  }, [onLoadComplete]);
+    return () => ctx.revert();
+  }, [onDone]);
 
-  if (isComplete) return null;
+  if (hidden) return null;
 
   return (
     <div
       ref={loaderRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0a]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background motion-reduce:hidden"
+      aria-hidden="true"
     >
       <svg
         ref={svgRef}

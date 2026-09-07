@@ -1,26 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Loader from './loader';
+import { IntroContext } from './intro-context';
+
+// Lives for the SPA session; reset by any full document load (normal or hard reload).
+let introPlayed = false;
 
 export default function LoaderWrapper({ children }: { children: React.ReactNode }) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
+  // Decided once per document load: play only when landing on the home page.
+  const [playLoader] = useState(() => pathname === '/' && !introPlayed);
+  const [introDone, setIntroDone] = useState(() => !playLoader);
+
+  const finish = useCallback(() => {
+    introPlayed = true;
+    setIntroDone(true);
+  }, []);
 
   return (
-    <>
-      {isHomePage && <Loader onLoadComplete={() => setIsLoaded(true)} />}
-      <div 
-        style={{ 
-          opacity: isHomePage ? (isLoaded ? 1 : 0) : 1, 
-          transition: 'opacity 0.3s'
-        }}
-        aria-hidden={isHomePage && !isLoaded ? 'true' : undefined}
-      >
-        {children}
-      </div>
-    </>
+    <IntroContext.Provider value={introDone}>
+      {playLoader && <Loader onDone={finish} />}
+      <div inert={!introDone}>{children}</div>
+    </IntroContext.Provider>
   );
 }
