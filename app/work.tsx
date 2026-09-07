@@ -32,16 +32,16 @@ export default function Work() {
               alt={project.imageAlt}
               src={project.imageSrc}
               width={250}
-              height={250}
+              height={133}
+              sizes="(min-width: 1024px) 250px, (min-width: 768px) 192px, 128px"
               className="h-auto w-32 md:w-48 lg:w-[250px] border-2 border-faded rounded-xl mb-0 md:mb-4 transition-colors duration-200 ease-out group-hover:border-light-faded"
-              style={{ width: 'auto', height: 'auto' }}
             />
             {project.githubUrl ? (
               <a
                 href={project.githubUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-fit md:w-auto transition-colors relative z-40 pointer-events-auto hover:text-highlight ml-4 md:ml-0"
+                className="inline-flex items-center justify-center p-2 -m-2 ml-2 md:ml-0 md:mt-0 transition-colors relative z-40 pointer-events-auto hover:text-highlight"
                 aria-label={`View ${project.title} on GitHub`}
               >
                 <Github size={20} className="md:w-6 md:h-6" aria-hidden="true" />
@@ -87,8 +87,8 @@ function TechBadge({ name, iconSrc }: { name: string; iconSrc: string }) {
     <li className="bg-faded/40 border border-faded text-title font-bold text-xs md:text-sm px-2 py-1 rounded-full flex items-center">
       <span
         aria-hidden="true"
-        className="mr-1 inline-block h-[12px] w-[12px] md:h-[14px] md:w-[14px] bg-current [mask-size:contain] [mask-repeat:no-repeat] [mask-position:center]"
-        style={{ maskImage: `url(${iconSrc})` }}
+        className="tech-icon mr-1 inline-block h-[12px] w-[12px] md:h-[14px] md:w-[14px]"
+        style={{ maskImage: `url(${iconSrc})`, WebkitMaskImage: `url(${iconSrc})` }}
       />
       {name}
     </li>

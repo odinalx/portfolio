@@ -10,6 +10,14 @@ export type Project = {
   techs: { name: string; iconSrc: string }[];
 };
 
+const nextStack = [
+  { name: 'Next.js', iconSrc: '/nextdotjs.svg' },
+  { name: 'React', iconSrc: '/react.svg' },
+  { name: 'TypeScript', iconSrc: '/typescript.svg' },
+  { name: 'Tailwind', iconSrc: '/tailwindcss.svg' },
+  { name: 'Docker', iconSrc: '/docker.svg' },
+];
+
 export const projects: Project[] = [
   {
     slug: 'organizy',
@@ -29,14 +37,34 @@ export const projects: Project[] = [
     ],
   },
   {
+    slug: 'nen-destiny',
+    title: 'Nen Destiny',
+    description:
+      'A Hunter x Hunter life simulator: take the Hunter exam, awaken your Nen, draw one of 66 named Hatsu and let 450+ branching events seal your fate. Fully client-side, bilingual FR/EN.',
+    imageSrc: '/nendestiny.webp',
+    imageAlt: 'Preview Nen Destiny',
+    href: 'https://nendestiny.odinalx.dev',
+    featured: true,
+    techs: nextStack,
+  },
+  {
+    slug: 'soul-destiny',
+    title: 'Soul Destiny',
+    description:
+      'A Bleach life simulator: live for centuries as a Shinigami, Hollow, Quincy or Human, with 280+ named powers, 57 achievements and a shareable life card.',
+    imageSrc: '/souldestiny.webp',
+    imageAlt: 'Preview Soul Destiny',
+    href: 'https://souldestiny.odinalx.dev',
+    techs: nextStack,
+  },
+  {
     slug: 'skillzy',
     title: 'Skillzy',
     description:
       'An AI-powered skill tracking and learning platform with Gemini integration, Stripe billing, and full internationalization support.',
-    imageSrc: '/skillzy.png',
+    imageSrc: '/skillzy.webp',
     imageAlt: 'Preview Skillzy',
     href: 'https://skillzy.fr',
-    featured: true,
     techs: [
       { name: 'Vue 3', iconSrc: '/vuedotjs.svg' },
       { name: 'TypeScript', iconSrc: '/typescript.svg' },
@@ -53,7 +81,7 @@ export const projects: Project[] = [
     imageSrc: '/portfolio.png',
     imageAlt: 'Preview Portfolio V2',
     href: 'https://odinalx.fr',
-    githubUrl:'https://github.com/odinalx/portfolio',
+    githubUrl: 'https://github.com/odinalx/portfolio',
     featured: true,
     techs: [
       { name: 'Next.js', iconSrc: '/nextdotjs.svg' },
@@ -67,7 +95,7 @@ export const projects: Project[] = [
     title: 'SecretSanta',
     description:
       'A modern web application for organizing Secret Santa gift exchanges with friends, family, or colleagues.',
-    imageSrc: '/Secret-Santa.png',
+    imageSrc: '/secret-santa.webp',
     imageAlt: 'Preview Secret-Santa',
     href: 'https://secretsanta.lorisalex.com/',
     githubUrl: 'https://github.com/odinalx/SecretSanta',
