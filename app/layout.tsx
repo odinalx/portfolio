@@ -7,7 +7,11 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -57,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.className} antialiased flex flex-col items-center text-primary text-base md:text-lg leading-6 md:leading-7`}
+        className={`${inter.variable} antialiased flex flex-col items-center text-primary text-base md:text-lg leading-6 md:leading-7`}
       >
         <a href="#main-content" className="skip-to-content">
           Skip to main content

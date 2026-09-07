@@ -1,40 +1,26 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
+/**
+ * Custom cursor (desktop with a fine pointer only).
+ * Positions are written as `transform: translate3d()` from a single
+ * requestAnimationFrame loop: no layout reads, no per-event Animation objects.
+ */
 export default function Cursor() {
   const dotRef = useRef<HTMLDivElement | null>(null);
   const outlineRef = useRef<HTMLDivElement | null>(null);
-  const [isTouchDevice, setIsTouchDevice] = useState(true); // Start as true to prevent flash
-  const isInitializedRef = useRef(false);
+  const [enabled, setEnabled] = useState(false); // Start disabled to prevent flash on touch devices
 
   useEffect(() => {
-    // Check if device supports touch or is mobile/tablet
-    const checkTouchDevice = () => {
-      const isTouch = 
-        'ontouchstart' in window ||
-        navigator.maxTouchPoints > 0 ||
-        window.innerWidth < 1024;
-      
-      setIsTouchDevice(isTouch);
-      
-      // Reset initialization when switching back to desktop
-      if (!isTouch && isInitializedRef.current === false) {
-        // Will be initialized on next mouse move
-      } else if (isTouch) {
-        // Reset so cursor re-initializes when coming back to desktop
-        isInitializedRef.current = false;
-      }
-    };
-
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-
-    return () => window.removeEventListener('resize', checkTouchDevice);
+    const mql = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)');
+    const update = () => setEnabled(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
   }, []);
 
   useEffect(() => {
-    // Don't initialize cursor on touch devices
-    if (isTouchDevice) return;
+    if (!enabled) return;
 
     const cursorDot = dotRef.current;
     const cursorOutline = outlineRef.current;
@@ -42,53 +28,67 @@ export default function Cursor() {
 
     cursorOutline.classList.add('cursor-outline-transition');
 
-    const handleMove = (e: MouseEvent) => {
-      const posX = e.clientX;
-      const posY = e.clientY;
+    const target = { x: 0, y: 0 };
+    const outline = { x: 0, y: 0 };
+    let initialized = false;
+    let raf = 0;
+    let running = false;
 
-      // Initialize cursor position on first move (or after returning from mobile)
-      if (!isInitializedRef.current) {
+    const tick = () => {
+      cursorDot.style.transform = `translate3d(${target.x}px, ${target.y}px, 0) translate(-50%, -50%)`;
+      outline.x += (target.x - outline.x) * 0.2;
+      outline.y += (target.y - outline.y) * 0.2;
+      cursorOutline.style.transform = `translate3d(${outline.x}px, ${outline.y}px, 0) translate(-50%, -50%)`;
+
+      // Stop the loop once the outline has caught up; restart on next move
+      if (Math.abs(target.x - outline.x) < 0.1 && Math.abs(target.y - outline.y) < 0.1) {
+        running = false;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const handleMove = (e: MouseEvent) => {
+      target.x = e.clientX;
+      target.y = e.clientY;
+
+      if (!initialized) {
+        // Snap on first move (or after returning from touch mode), then fade in
+        outline.x = target.x;
+        outline.y = target.y;
         cursorDot.style.opacity = '1';
         cursorOutline.style.opacity = '1';
-        cursorDot.style.left = `${posX}px`;
-        cursorDot.style.top = `${posY}px`;
-        cursorOutline.style.left = `${posX}px`;
-        cursorOutline.style.top = `${posY}px`;
-        isInitializedRef.current = true;
+        initialized = true;
       }
-
-      cursorDot.style.left = `${posX}px`;
-      cursorDot.style.top = `${posY}px`;
-
-      cursorOutline.animate(
-        { left: `${posX}px`, top: `${posY}px` },
-        { duration: 200, fill: 'forwards' }
-      );
+      if (!running) {
+        running = true;
+        raf = requestAnimationFrame(tick);
+      }
     };
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as Element | null;
-      if (!target) return;
-      const link = (target as HTMLElement).closest('a');
-      if (!link) return;
+      if (!target?.closest('a, button')) return;
       cursorOutline.classList.add('cursor-outline-active');
     };
 
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as Element | null;
-      if (!target) return;
-      const link = (target as HTMLElement).closest('a');
-      if (!link) return;
-
+      if (!target?.closest('a, button')) return;
       cursorOutline.classList.remove('cursor-outline-active');
     };
 
-    const handleMouseDown = () => {
-      cursorOutline.classList.add('cursor-outline-press');
-    };
+    const handleMouseDown = () => cursorOutline.classList.add('cursor-outline-press');
+    const handleMouseUp = () => cursorOutline.classList.remove('cursor-outline-press');
 
-    const handleMouseUp = () => {
-      cursorOutline.classList.remove('cursor-outline-press');
+    // Hide when the pointer leaves the window, and after a bfcache restore
+    const handleLeave = () => {
+      cursorDot.style.opacity = '0';
+      cursorOutline.style.opacity = '0';
+      initialized = false;
+    };
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) handleLeave();
     };
 
     window.addEventListener('mousemove', handleMove, { passive: true });
@@ -96,29 +96,33 @@ export default function Cursor() {
     document.addEventListener('mouseout', handleMouseOut, { passive: true });
     document.addEventListener('mousedown', handleMouseDown, { passive: true });
     document.addEventListener('mouseup', handleMouseUp, { passive: true });
+    document.documentElement.addEventListener('mouseleave', handleLeave);
+    window.addEventListener('pageshow', handlePageShow);
 
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseover', handleMouseOver as EventListener);
-      document.removeEventListener('mouseout', handleMouseOut as EventListener);
-      document.removeEventListener('mousedown', handleMouseDown as EventListener);
-      document.removeEventListener('mouseup', handleMouseUp as EventListener);
+      document.removeEventListener('mouseover', handleMouseOver);
+      document.removeEventListener('mouseout', handleMouseOut);
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.documentElement.removeEventListener('mouseleave', handleLeave);
+      window.removeEventListener('pageshow', handlePageShow);
     };
-  }, [isTouchDevice]);
+  }, [enabled]);
 
-  // Don't render cursor on touch devices
-  if (isTouchDevice) return null;
+  if (!enabled) return null;
 
   return (
-    <div className="z-[9999] hidden lg:block">
+    <div className="z-[9999]" aria-hidden="true">
       <div
         ref={dotRef}
-        className="fixed left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-[50%] pointer-events-none w-[5px] h-[5px] bg-cursor z-[9999]"
+        className="fixed left-0 top-0 rounded-[50%] pointer-events-none w-[5px] h-[5px] bg-cursor z-[9999] will-change-transform"
         style={{ opacity: 0, transition: 'opacity 0.2s' }}
       ></div>
       <div
         ref={outlineRef}
-        className="fixed left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-[50%] pointer-events-none w-[40px] h-[40px] border-2 border-cursor-outline cursor-outline z-[9999]"
+        className="fixed left-0 top-0 rounded-[50%] pointer-events-none w-[40px] h-[40px] border-2 border-cursor-outline cursor-outline z-[9999] will-change-transform"
         style={{ opacity: 0, transition: 'opacity 0.2s' }}
       ></div>
     </div>

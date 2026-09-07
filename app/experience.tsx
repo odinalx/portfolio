@@ -48,8 +48,7 @@ function ExperienceItem({ entry }: { entry: ExperienceEntry }) {
           height={32}
           width={32}
           alt={entry.logoAlt ?? `${entry.company} logo`}
-          className="mb-2 md:mb-0"
-          style={{ width: 'auto', height: 'auto' }}
+          className="mb-2 md:mb-0 h-8 w-8 rounded-sm"
         />
       ) : null}
       <div className="flex flex-col md:flex-row md:gap-8 lg:gap-24">

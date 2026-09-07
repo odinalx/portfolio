@@ -4,7 +4,10 @@
   --background: #0D0D0D;
   --foreground: #ededed;
   --faded: #5a5a5a;
-  --highlight: #D83A49;
+  /* Brand red, lightened slightly for text: 4.7:1 on --background (WCAG AA) */
+  --highlight: #E04355;
+  /* Deeper red for filled buttons: white text reaches 5.5:1 on it */
+  --highlight-deep: #C2303F;
   --light-faded: #B8B8B8;
   --primary: #959595;
   --title: #E3E3E3;
@@ -17,6 +20,7 @@
   --color-foreground: var(--foreground);
   --color-faded: var(--faded);
   --color-highlight : var(--highlight);
+  --color-highlight-deep: var(--highlight-deep);
   --color-light-faded : var(--light-faded);
   --color-primary : var(--primary);
   --color-title : var(--title);
@@ -31,9 +35,26 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   cursor: none;
   overflow-x: hidden;
+}
+
+/* Tech badge icons: SVG masks tinted with currentColor (prefixed for older WebKit) */
+.tech-icon {
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 a {
