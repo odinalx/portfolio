@@ -1,8 +1,8 @@
 'use client';
 
-import { Github, ArrowUpRight, ArrowLeft } from 'lucide-react';
+import { Github, ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import ArrowLink from '../arrow-link';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { gsap } from 'gsap';
 import { projects, type Project } from '../data/projects';
@@ -30,7 +30,7 @@ function ProjectCard({ project }: { project: Project }) {
         alt={project.imageAlt}
         width={640}
         height={341}
-        sizes="(max-width: 767px) 100vw, 640px"
+        sizes="(max-width: 767px) 100vw, 360px"
         className="w-full h-auto rounded-xl border-2 border-faded mb-4"
       />
       <div className="flex items-start justify-between mb-3">
@@ -93,9 +93,14 @@ function HoverPreview({
 
     const reduced = !window.matchMedia(MOTION_OK).matches;
     let raf = 0;
+    let initialized = false;
 
     const onMove = (e: MouseEvent) => {
       targetY.current = e.clientY;
+      if (!initialized) {
+        currentY.current = e.clientY;
+        initialized = true;
+      }
     };
     const tick = () => {
       const lerp = reduced ? 1 : 0.18;
@@ -103,11 +108,29 @@ function HoverPreview({
       const anchor = anchorRef.current?.getBoundingClientRect();
       const width = el.offsetWidth;
       const height = el.offsetHeight;
-      // Dock to the right of the table when there is room, otherwise to the left
-      let x = anchor ? anchor.right + 32 : window.innerWidth - width - 16;
-      if (anchor && x + width > window.innerWidth - 16) x = Math.max(16, anchor.left - width - 32);
-      const y = Math.min(Math.max(16, currentY.current - height / 2), window.innerHeight - height - 16);
-      el.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
+      const gap = 32;
+      const edge = 16;
+      // Dock beside the table (right, else left). No room on either side: stay hidden.
+      let x: number | null = null;
+      let side: 'right' | 'left' = 'right';
+      if (anchor) {
+        if (anchor.right + gap + width <= window.innerWidth - edge) x = anchor.right + gap;
+        else if (anchor.left - gap - width >= edge) {
+          x = anchor.left - gap - width;
+          side = 'left';
+        }
+      }
+      el.style.visibility = x === null ? 'hidden' : 'visible';
+      if (x !== null) {
+        // Stay above the fixed side bar that lives at the bottom of that side
+        const bar = document.querySelector(
+          side === 'right' ? '[aria-label="Location information"]' : 'nav[aria-label="Social media links"]',
+        );
+        const barTop = bar ? bar.getBoundingClientRect().top : window.innerHeight;
+        const maxY = Math.min(window.innerHeight, barTop) - height - edge;
+        const y = Math.min(Math.max(edge, currentY.current - height / 2), maxY);
+        el.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
+      }
       raf = requestAnimationFrame(tick);
     };
 
@@ -122,8 +145,9 @@ function HoverPreview({
   return (
     <div
       ref={ref}
+      data-hover-preview
       aria-hidden="true"
-      className={`hidden lg:block fixed left-0 top-0 z-30 w-72 xl:w-80 pointer-events-none transition-opacity duration-150 ease-out will-change-transform ${
+      className={`hidden lg:block fixed left-0 top-0 z-30 w-64 2xl:w-80 pointer-events-none transition-opacity duration-150 ease-out will-change-transform ${
         project ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -152,7 +176,12 @@ export default function AllProjectsPage() {
       .timeline({ defaults: { ease: 'power3.out' } })
       .from('.back-link', { x: -30, opacity: 0, duration: 0.6 })
       .from('.page-title', { y: 50, opacity: 0, duration: 0.8 }, '-=0.4')
-      .from('tbody tr', { y: 30, opacity: 0, duration: 0.5, stagger: 0.1 }, '-=0.4')
+      .from('thead th', { opacity: 0, duration: 0.4, stagger: 0.05 }, '-=0.4')
+      .from(
+        'tbody td',
+        { y: 24, opacity: 0, duration: 0.5, stagger: { each: 0.03, grid: [projects.length, 4], axis: 'y' } },
+        '-=0.3',
+      )
       .from('.project-card', { y: 30, opacity: 0, duration: 0.5, stagger: 0.1 }, '-=0.4');
   });
 
@@ -162,51 +191,56 @@ export default function AllProjectsPage() {
       className="text-primary min-h-screen max-w-3xl px-4 md:px-6 lg:px-8 py-8 md:py-12 lg:py-20"
       id="main-content"
     >
-      <Link
+      <ArrowLink
         href="/"
-        className="back-link inline-flex items-center text-highlight hover:text-title transition-colors mb-6 md:mb-8 lg:mb-12 text-sm md:text-base"
+        direction="left"
+        iconFirst
+        className="back-link !text-highlight hover:!text-title mb-6 md:mb-8 lg:mb-12 text-sm md:text-base"
         aria-label="Odin Alexandre, back to home page"
       >
-        <ArrowLeft className="mr-2 w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
         Odin Alexandre
-      </Link>
+      </ArrowLink>
 
       <h1 className="page-title text-title text-3xl md:text-5xl lg:text-7xl font-bold mb-8 md:mb-12 lg:mb-16">
         All Projects
       </h1>
 
-      {/* Mobile: Card layout */}
-      <div className="md:hidden">
+      {/* Mobile & tablet: card layout (two columns from md) */}
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-x-8">
         {projects.map((project) => (
           <ProjectCard key={project.slug} project={project} />
         ))}
       </div>
 
-      {/* Desktop: Table layout */}
-      <div className="hidden md:block">
+      {/* Desktop: table layout */}
+      <div className="hidden lg:block">
         <HoverPreview project={hovered} anchorRef={tableRef} />
-        <table ref={tableRef} className="w-full border-collapse table-auto" onMouseLeave={() => setHovered(null)}>
+        <table
+          ref={tableRef}
+          className="w-full border-separate border-spacing-0 table-auto"
+          onMouseLeave={() => setHovered(null)}
+        >
           <thead>
-            <tr className="border-b border-faded">
-              <th className="text-left py-4 px-4 text-title font-semibold text-sm lg:text-base">
+            <tr>
+              <th className="text-left py-4 px-4 text-title font-semibold text-sm lg:text-base border-b border-faded">
                 Project
               </th>
-              <th className="text-left py-4 px-4 text-title font-semibold text-sm lg:text-base">
+              <th className="text-left py-4 px-4 text-title font-semibold text-sm lg:text-base border-b border-faded">
                 Built with
               </th>
-              <th className="text-center py-4 px-4 text-title font-semibold text-sm lg:text-base w-20">
+              <th className="text-center py-4 px-4 text-title font-semibold text-sm lg:text-base w-20 border-b border-faded">
                 Link
               </th>
-              <th className="text-center py-4 px-4 text-title font-semibold text-sm lg:text-base w-20">
+              <th className="text-center py-4 px-4 text-title font-semibold text-sm lg:text-base w-20 border-b border-faded">
                 GitHub
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="[&_td]:border-b [&_td]:border-faded/50">
             {projects.map((project) => (
               <tr
                 key={project.slug}
-                className="border-b border-faded/50 hover:bg-white/5 transition-colors"
+                className="hover:bg-white/5 transition-colors"
                 onMouseEnter={() => setHovered(project)}
               >
                 <td className="py-6 px-4">
